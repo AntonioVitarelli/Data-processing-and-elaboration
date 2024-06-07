@@ -3,6 +3,7 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import linregress
+import datetime
 
 calibration_board = pd.read_csv('calibrazione_board1.txt', sep='\t')
 watermark_list = calibration_board['Watermark'].tolist()
@@ -49,13 +50,22 @@ y_pressure_datasheet = slope_calibration_datasheet * x_resistance_datasheet + in
 df = pd.read_csv('experiment.csv')
 df_filtered = df.loc[df['id'] == 13]
 
+# Convert 'Date' column to datetime
+df_filtered['Date'] = pd.to_datetime(df_filtered['Date'])
+# Define start and end date
+start_date = '2024-03-09'
+end_date = '2024-03-10'
+# Filter rows for the date range
+date_range = (df_filtered['Date'] >= start_date) & (df_filtered['Date'] <= end_date)
+df_filtered_date_range = df_filtered.loc[date_range]
+
 # Collect all 'watermark' values in a list
-watermark_values = df_filtered['Watermark'].tolist()
+watermark_values = df_filtered_date_range['Watermark'].tolist()
 
 # Use the linear regression model to make predictions
 resistance_experiment = []
 watermark_experiment = []
-for i in range(len(watermark_values)-1):
+for i in range(len(watermark_values)):
     watermark_experiment.append(1/float(watermark_values[i]))
 for value in watermark_experiment:
     resistance_experiment.append(slope_calibration / value + intercept_calibration)
@@ -65,16 +75,15 @@ for r in resistance_experiment:
     mat_pot.append(slope_calibration_datasheet * r + intercept_calibration_datasheet)
 
 # Create a list of timestamps (crono)
-lenght = len(mat_pot)
-crono = []
-for i in range(lenght):
-    crono.append(i)
+# Create a list of timestamps (crono)
+date_list_experiment = df_filtered_date_range['Date'].tolist()
+
 
 # Plot the data points
-plt.plot(crono, mat_pot, label='Plant 13')
+plt.plot(date_list_experiment, mat_pot, label='Plant 13')
 plt.xlabel('Time')  # Sets the label for the x-axis
-plt.ylabel('Watermark values')  # Sets the label for the y-axis
-plt.title('Watermark values over time')  # Sets the title of the plot
+plt.ylabel('Matric potential values')  # Sets the label for the y-axis
+plt.title('Matric potential values over time')  # Sets the title of the plot
 plt.legend()  # Adds a legend to the plot
 plt.grid(True)  # Adds a grid to the plot
 plt.show()  # Displays the plot
