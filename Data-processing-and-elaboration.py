@@ -82,7 +82,7 @@ mask = (df['Date'] > start_date) & (df['Date'] <= end_date)
 df = df.loc[mask]
 
 # Define the plant IDs to plot the matric potential 
-plant_id = [ 2, 3, 4,7, 8, 9, 5, 6, 10, 15]
+plant_id = [ 2, 3, 4, 7, 8, 9, 5, 6, 10, 15]
 
 # Loop over each plant ID
 for id in plant_id:
@@ -96,7 +96,6 @@ for id in plant_id:
     Matric_potential_values = [straight_line(r, slope_calibration_datasheet, intercept_calibration_datasheet) for r in resistance_values]
     # Filter the 'Date' array in the same way
     plt.plot(df_filtered['Date'], Matric_potential_values,  label='Plant ' + str(id))
-    
 plt.xlabel('Time')  # Sets the label for the x-axis
 plt.ylabel('Matric potential values')  # Sets the label for the y-axis
 plt.title('Matric potential values over time')  # Sets the title of the plot
@@ -104,3 +103,27 @@ plt.legend()  # Adds a legend to the plot
 plt.grid(True)  # Adds a grid to the plot
 plt.gcf().autofmt_xdate()  # Rotate and align the x labels
 plt.show()  # Displays the plot
+    
+from scipy.stats import pearsonr
+plant_id = [13, 14, 6, 8, 9, 10]
+# Loop over each plant ID
+for id in plant_id:
+    # Filter the DataFrame for the current plant ID
+    df_filtered = df.loc[df['id'] == id]
+    #df_filtered = df_filtered.loc[df['Watermark'] != 0]
+    # Collect all 'watermark' values in a list
+    watermark_values = df_filtered['Watermark'].tolist()
+    # Transform all watermark values into resistances using the equation of the regression line
+    resistance_values = [hyperbola(w, *popt) for w in watermark_values]
+    # Transform all resistance values into Matric_potential using the equation of the regression line from the datasheet
+    Matric_potential_values = [straight_line(r, slope_calibration_datasheet, intercept_calibration_datasheet) for r in resistance_values]
+    # Calculate the correlation
+    # Assuming Matric_potential_values and df_filtered['Impedance'] are your two lists
+    Matric_potential_values = np.array(Matric_potential_values)
+    impedance_values = np.array(df_filtered['Impedance'])
+    # Remove NaN and infinite values
+    #Matric_potential_values = Matric_potential_values[np.isfinite(Matric_potential_values)]
+    impedance_values = impedance_values[np.isfinite(impedance_values)]
+    correlation, _ = pearsonr(df_filtered['Impedance'], Matric_potential_values)
+    print(f"The correlation between impedence and matric potential of plant "+ str(id) + " is: " + str(correlation))
+   
